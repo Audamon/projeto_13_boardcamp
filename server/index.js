@@ -41,34 +41,55 @@ server.post('/categories', async (req, res) => {
 
 server.get('/games', async (req, res) => {
     const { name } = req.query;
-    if (!name) {
-        console.log(name)
-        const promise = await connection.query('SELECT * FROM games;');
+    const gameName = name + '%';
+    try {
+        if (!name) {
+
+            const promise = await connection.query('SELECT * FROM games;');
+            res.send(promise.rows)
+
+            return
+        }
+        console.log(name);
+        const promise = await connection.query('SELECT * FROM games WHERE name LIKE $1;', [gameName]);
         res.send(promise.rows)
 
-        return
-    }
-    console.log(name)
-    const promise = await connection.query('SELECT * FROM games WHERE $1;', [name]);
-    res.send(promise.rows)
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
 
+    }
 });
 
 server.post('/games', async (req, res) => {
     const { name, stockTotal, pricePerDay, categoryId, image } = req.body;
-    if (!name || stockTotal === 0 || pricePerDay === 0) {
-        res.sendStatus(400)
-        return;
+
+    try {
+        if (!name || stockTotal === 0 || pricePerDay === 0) {
+            res.sendStatus(400)
+            return;
+        }
+        const promise = await connection.query('SELECT * FROM games');
+        const found = promise.rows.find(element => element.name === name);
+        if (found) {
+            res.sendStatus(409);
+            return;
+        }
+        await connection.query('INSERT INTO games (name,  image, "stockTotal", "categoryId", "pricePerDay") VALUES ($1,$2,$3,$4, $5);', [name, image, stockTotal, categoryId, pricePerDay]);
+        res.sendStatus(201);
+    } catch (error) {
+        console.log(error)
+
+        res.sendStatus(500)
+
     }
-    const promise = await connection.query('SELECT * FROM categories');
-    const found = promise.rows.find(element => element.name === name);
-    if (found) {
-        res.sendStatus(409);
-        return;
-    }
-    connection.query('INSERT INTO games (name,  image, stockTotal, categoryId, pricePerDay) VALUES ($1,$2,$3,$4, $5);', [name, image, stockTotal, categoryId, pricePerDay]);
-    res.sendStatus(201);
+
+
 })
 
+server.get('/customers', async (req, res) => {
+    const promise = await connection.query('SELECT * FROM customers');
+    res.send(promise.rows)
+})
 
 server.listen(4000);
