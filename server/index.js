@@ -46,11 +46,14 @@ server.get('/games', async (req, res) => {
     try {
         if (!name) {
 
-            const promise = await connection.query('SELECT * FROM games;');
+            const promise = await connection.query('SELECT games.*, categories.name AS "categoryName" FROM games JOIN categories ON games."categoryId" = categories.id;');
+            console.log(promise.rows)
             res.send(promise.rows)
             return
         }
+
         const promise = await connection.query('SELECT * FROM games WHERE name LIKE $1;', [gameName]);
+
         res.send(promise.rows)
 
     } catch (error) {
