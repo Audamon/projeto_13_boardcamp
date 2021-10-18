@@ -57,7 +57,7 @@ server.get('/games', async (req, res) => {
         res.send(promise.rows)
 
     } catch (error) {
-        console.log(error);
+        console.log(error); 
         res.sendStatus(500);
 
     }
